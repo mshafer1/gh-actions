@@ -27,7 +27,7 @@ runs:
       if [ -z "${{ inputs.seed }}" ]; then
         SEED="default"
       else
-        SEED=$( echo "${{ inputs.seed }}" | tr '[:upper:]' '[:lower:]' | tr ' .@-/' '_____' )
+        SEED=$( echo "${{ inputs.seed }}" | tr '[:upper:]' '[:lower:]' | tr ' @./-' '_____' )
       fi
 
       VAR_NAME="build-counter-${SEED}"
