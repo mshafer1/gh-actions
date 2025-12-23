@@ -40,4 +40,4 @@ runs:
 
       echo "counter=${NEW_VAL}" >> $GITHUB_OUTPUT
 
-      gh variable set "$VAR_NAME" -b "$NEW_VAL" --visibility=private
+      gh variable set "$VAR_NAME" -b "$NEW_VAL"
