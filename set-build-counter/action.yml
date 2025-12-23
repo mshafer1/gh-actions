@@ -30,7 +30,7 @@ runs:
         SEED=$( echo "${{ inputs.seed }}" | tr '[:upper:]' '[:lower:]' | tr ' @./-' '_____' )
       fi
 
-      VAR_NAME="build-counter-${SEED}"
+      VAR_NAME="build_counter_${SEED}"
 
       VAR_START=$(( ${{ inputs.start-counter-at }} - 1 ))
 
