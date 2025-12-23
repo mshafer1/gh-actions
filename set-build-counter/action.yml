@@ -34,9 +34,15 @@ runs:
 
       VAR_START=$(( ${{ inputs.start-counter-at }} - 1 ))
 
+      echo "Starting value at ${VAR_START} for variable ${VAR_NAME}"
+
       CURRENT_VAL=$(gh variable get "$VAR_NAME" 2>/dev/null || echo "${VAR_START}")
 
+      echo "Current counter value is ${CURRENT_VAL}"
+
       NEW_VAL=$((CURRENT_VAL + 1))
+
+      echo "New counter value is ${NEW_VAL}"
 
       echo "counter=${NEW_VAL}" >> $GITHUB_OUTPUT
 
