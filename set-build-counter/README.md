@@ -16,7 +16,7 @@ By default, this action starts counting at 0
 
 env:
   REPO_MAJOR_MIN: 1.0
-  GH_TOKEN: ${{ github.token }}
+  GH_TOKEN: ${{ secrets.GH_PAT }} # default GITHUB_TOKEN has no permission to set repo variables, must be a PAT that has variable write access
 
 permissions:
   contents: read
