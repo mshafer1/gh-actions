@@ -44,6 +44,7 @@ jobs:
         id: set-build-counter
         with:
             start-counter-at: '100'
+            seed: '${{ env.REPO_MAJOR_MIN }}-start-at-100'
       - name: Use Output
         run: |
           echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
