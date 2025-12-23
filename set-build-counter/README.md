@@ -16,11 +16,10 @@ By default, this action starts counting at 0
 
 env:
   REPO_MAJOR_MIN: 1.0
+  GH_TOKEN: ${{ github.token }}
 
 permissions:
   contents: read
-  releases: write
-  variables: write # Required for set-build-counter to store info
 
 steps:
  

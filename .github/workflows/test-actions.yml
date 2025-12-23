@@ -9,6 +9,7 @@ on:
 
 env:
   REPO_MAJOR_MIN: '1.0'
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   build-counter-test-default:
