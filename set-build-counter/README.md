@@ -23,7 +23,7 @@ permissions:
 steps:
   - name: Check out repo
     uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-  - uses: ./set-build-counter
+  - uses: mshafer1/gh-actions/set-build-counter@v0
     id: set-build-counter
     with:
       GH_TOKEN: ${{ secrets.GH_PAT }} # default GITHUB_TOKEN has no permission to set repo variables, must be a PAT that has variable write access
@@ -41,7 +41,7 @@ environment:
   REPO_MAJOR_MIN: 1.0
 
 steps:
-- uses: mshafer1/gh-actions/build-counter@v0
+- uses: mshafer1/gh-actions/set-build-counter@v0
   id: set-build-counter
   with:
     seed: "${{ env.REPO_MAJOR_MIN }}"
@@ -58,7 +58,7 @@ environment:
   REPO_MAJOR_MIN: 1.0
 
 steps:
-- uses: mshafer1/gh-actions/build-counter@v0
+- uses: mshafer1/gh-actions/set-build-counter@v0
   id: set-build-counter
   with:
     start-counter-at: 100
