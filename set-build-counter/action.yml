@@ -34,10 +34,10 @@ runs:
 
       VAR_START=$(( ${{ inputs.start-counter-at }} - 1 ))
 
-      CURRENT_VAL=$(gh variable get "$VAR_NAME" --repo "$GITHUB_REPOSITORY" 2>/dev/null || echo "${VAR_START}")
+      CURRENT_VAL=$(gh variable get "$VAR_NAME" 2>/dev/null || echo "${VAR_START}")
 
       NEW_VAL=$((CURRENT_VAL + 1))
 
       echo "counter=${NEW_VAL}" >> $GITHUB_OUTPUT
 
-      gh variable set "$VAR_NAME" "$NEW_VAL" --repo "$GITHUB_REPOSITORY" --visibility=private
+      gh variable set "$VAR_NAME" -b "$NEW_VAL" --visibility=private
