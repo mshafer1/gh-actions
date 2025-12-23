@@ -25,7 +25,7 @@ steps:
     uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
   - uses: mshafer1/gh-actions/set-build-counter@v0
     id: set-build-counter
-    with:
+    env:
       GH_TOKEN: ${{ secrets.GH_PAT }} # default GITHUB_TOKEN has no permission to set repo variables, must be a PAT that has variable write access
   - name: Use Output
     run: |
@@ -45,6 +45,8 @@ steps:
   id: set-build-counter
   with:
     seed: "${{ env.REPO_MAJOR_MIN }}"
+  env:
+    GH_TOKEN: ${{ secrets.GH_PAT }} # default GITHUB_TOKEN has no permission to set repo variables, must be a PAT that has variable write access
 - name: Use Output
   run: echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
 ```
@@ -62,6 +64,8 @@ steps:
   id: set-build-counter
   with:
     start-counter-at: 100
+  env:
+    GH_TOKEN: ${{ secrets.GH_PAT }} # default GITHUB_TOKEN has no permission to set repo variables, must be a PAT that has variable write access
 - name: Use Output
   run: echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
 ```
