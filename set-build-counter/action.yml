@@ -1,0 +1,43 @@
+name: Update Build Counter
+description: Update repo variable to track build count
+inputs:
+  seed:
+    description: >
+      The value to track uniqueness of builds. This is typically the major.minor version
+      of the project being built (other examples would include "release-1.0" from a release branch name).
+
+      Defaults to the workflow ref, which will cause the build counter to be unique per-branch and workflow file.
+    default: ${{ github.workflow_ref }}
+  start-counter-at:
+    description: >
+      The value to start the counter at if it does not already exist. Defaults to 0.
+    default: '0'
+outputs:
+  count:
+    description: >
+      The updated build counter value.
+    value: ${{ steps.set-build-counter-vars.outputs.counter }}
+runs:
+  using: composite
+  steps:
+  - name: Set variables
+    id: "set-build-counter-vars"
+    shell: bash
+    run: |
+      if [ -z "${{ inputs.seed }}" ]; then
+        SEED="default"
+      else
+        SEED=$( echo "${{ inputs.seed }}" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr '/' '-' )
+      fi
+
+      VAR_NAME="build-counter-${SEED}"
+
+      VAR_START=$(( ${{ inputs.start-counter-at }} - 1 ))
+
+      CURRENT_VAL=$(gh variable get "$VAR_NAME" --repo "$GITHUB_REPOSITORY" 2>/dev/null || echo "${VAR_START}")
+
+      NEW_VAL=$((CURRENT_VAL + 1))
+
+      echo "counter=${NEW_VAL}" >> $GITHUB_OUTPUT
+
+      gh variable set "$VAR_NAME" "$NEW_VAL" --repo "$GITHUB_REPOSITORY" --visibility=private
