@@ -22,8 +22,7 @@ jobs:
   build-counter-test-default:
     name: Default build counter test
     runs-on: ubuntu-latest
-    permissions:
-      actions: write # grant the job to write to action variables
+    environment: build-counter
     steps:
       - name: Check out repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -32,6 +31,8 @@ jobs:
       - uses: ./set-build-counter
         name: Set Build Counter
         id: set-build-counter
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }} # default GITHUB_TOKEN has no permission to set repo variables
       - name: Use Output
         run: |
           echo "Build Counter Result: $BUILD_COUNT"
