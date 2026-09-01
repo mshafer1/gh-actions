@@ -7,17 +7,11 @@ on seed information.
 By default, this action starts counting at 0.
 
 > [!IMPORTANT]
-> This action uses a shared pipeline cache file.
-> You should configure a workflow-level `concurrency` when the action is used in a pipeline that may run multiple jobs at the
-> same time. This prevents multiple jobs from racing on the shared cache before the lock is acquired.
+> This action uses a shared pipeline cache as a convenience mechanism only.
+> It is not an authoritative or integrity-protected source of truth and is not suitable for security-sensitive or repo-wide build accounting across parallel jobs.
 >
->
-> These are the trade-offs of this version of set-build-counter:
-> - it is best-effort
-> - it is not safe for authoritative counts across parallel jobs
-> - it should only be used behind a strict concurrency group and only when you accept cache-based eventual consistency
->
-> It does however, work without a PAT
+> Use it only behind a strict workflow-level `concurrency` group and only when you accept cache-based eventual consistency.
+> This variant is best-effort: it can work without a PAT, but it does not provide the same guarantees as a repo-scoped state store with explicit permissions.
 
 ## Usage
 
