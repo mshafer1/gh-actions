@@ -1,138 +1,49 @@
 name: Update Build Counter
-description: Update a JSON build counter with an exclusive lock around the cache mutation.
-
+description: Update repo variable to track build count
 inputs:
   seed:
     description: >
-      The value to track uniqueness of builds. This is typically a combination of the branch and major.minor version
-      of the project being built (for example, "release-1.0" from a release branch name).
+      The value to track uniqueness of builds. This is typically the major.minor version
+      of the project being built (other examples would include "release-1.0" from a release branch name).
 
-      Defaults to the workflow ref, which makes the counter unique per branch and workflow file.
-    required: false
+      Defaults to the workflow ref, which will cause the build counter to be unique per-branch and workflow file.
     default: ${{ github.workflow_ref }}
   start-counter-at:
     description: >
       The value to start the counter at if it does not already exist. Defaults to 0.
-    required: false
     default: '0'
-
 outputs:
   count:
     description: >
       The updated build counter value.
-    value: ${{ steps.counter.outputs.count }}
-
+    value: ${{ steps.set-build-counter-vars.outputs.counter }}
 runs:
   using: composite
   steps:
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.22'
+  - name: Set variables
+    id: "set-build-counter-vars"
+    shell: bash
+    run: |
+      if [ -z "${{ inputs.seed }}" ]; then
+        SEED="default"
+      else
+        SEED=$( echo "${{ inputs.seed }}" | tr '[:upper:]' '[:lower:]' | tr ' @./-' '_____' )
+      fi
 
-    - name: Restore JSON Counter Cache
-      uses: actions/cache/restore@v4
-      with:
-        path: counters.json
-        key: shared-build-counter-json
+      VAR_NAME="build_counter_${SEED}"
 
-    - name: Update Counter via Go Script
-      id: counter
-      shell: bash
-      run: |
-        set -euo pipefail
+      VAR_START=$(( ${{ inputs.start-counter-at }} - 1 ))
 
-        mkdir -p .cache
-        exec 9>.cache/build-counter.lock
-        flock -x 9
+      echo "Starting value at ${VAR_START} for variable ${VAR_NAME}"
 
-        cat <<'EOF' > counter.go
-        package main
+      CURRENT_VAL=$(gh variable get "$VAR_NAME" 2>/dev/null || echo "${VAR_START}")
 
-        import (
-            "encoding/json"
-            "fmt"
-            "log"
-            "os"
-            "strconv"
-        )
+      echo "Current counter value is ${CURRENT_VAL}"
 
-        func main() {
-            counterBase := os.Getenv("INPUT_COUNTER_BASE")
-            if counterBase == "" {
-                counterBase = os.Getenv("GITHUB_REF_NAME")
-            }
-            if counterBase == "" {
-                counterBase = "main"
-            }
+      NEW_VAL=$((CURRENT_VAL + 1))
 
-            startAt := 0
-            if val, err := strconv.Atoi(os.Getenv("INPUT_START_COUNTER_AT")); err == nil {
-                startAt = val
-            }
+      echo "New counter value is ${NEW_VAL}"
 
-            const dbFile = "counters.json"
-            counters := make(map[string]int)
+      echo "counter=${NEW_VAL}" >> $GITHUB_OUTPUT
 
-            if data, err := os.ReadFile(dbFile); err == nil {
-                if err := json.Unmarshal(data, &counters); err != nil {
-                    log.Fatalf("failed to parse json: %v", err)
-                }
-            }
-
-            currentCount, exists := counters[counterBase]
-            if !exists {
-                currentCount = startAt
-            } else {
-                currentCount++
-            }
-            counters[counterBase] = currentCount
-
-            tempFile, err := os.CreateTemp("", "counters-*.json")
-            if err != nil {
-                log.Fatalf("failed to create temp file: %v", err)
-            }
-            tempPath := tempFile.Name()
-            defer os.Remove(tempPath)
-
-            newData, err := json.MarshalIndent(counters, "", "  ")
-            if err != nil {
-                log.Fatalf("failed to marshal json: %v", err)
-            }
-
-            if _, err := tempFile.Write(newData); err != nil {
-                tempFile.Close()
-                log.Fatalf("failed to write json to temp file: %v", err)
-            }
-            if err := tempFile.Close(); err != nil {
-                log.Fatalf("failed to close temp file: %v", err)
-            }
-
-            if err := os.Rename(tempPath, dbFile); err != nil {
-                log.Fatalf("failed to atomically replace db file: %v", err)
-            }
-
-            if githubOutput := os.Getenv("GITHUB_OUTPUT"); githubOutput != "" {
-                if f, err := os.OpenFile(githubOutput, os.O_APPEND|os.O_WRONLY, 0644); err == nil {
-                    defer f.Close()
-                    fmt.Fprintf(f, "count=%d\n", currentCount)
-                }
-            }
-
-            fmt.Printf("Counter base key: %s\n", counterBase)
-            fmt.Printf("Start counter at: %d\n", startAt)
-            fmt.Printf("Build number: %d\n", currentCount)
-        }
-        EOF
-
-        go mod init counter-app
-        go run counter.go
-      env:
-        INPUT_COUNTER_BASE: ${{ inputs.seed }}
-        INPUT_START_COUNTER_AT: ${{ inputs.start-counter-at }}
-
-    - name: Save JSON Counter Cache
-      uses: actions/cache/save@v4
-      with:
-        path: counters.json
-        key: shared-build-counter-json
+      gh variable set "$VAR_NAME" -b "$NEW_VAL"
