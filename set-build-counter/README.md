@@ -4,7 +4,11 @@
 The `mshafer1/gh-actions/build-counter` action sets an ever incrementing repo variable based 
 on seed information.
 
-By default, this action starts counting at 0
+By default, this action starts counting at 0.
+
+> [!IMPORTANT]
+> This action requires a GitHub token with repo variable write access, such as a PAT that has permission to update repository variables. The default GITHUB_TOKEN does not have the needed permission.
+> Please use a fine-grained pat to minimize access.
 
 ## Usage
 

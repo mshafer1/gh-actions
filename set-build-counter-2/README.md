@@ -7,9 +7,17 @@ on seed information.
 By default, this action starts counting at 0.
 
 > [!IMPORTANT]
-> This action uses an exclusive file lock while it reads and writes the shared counter file, but you should also
-> configure workflow-level `concurrency` when the action is used in a pipeline that may run multiple jobs at the
+> This action uses a shared pipeline cache file.
+> You should configure a workflow-level `concurrency` when the action is used in a pipeline that may run multiple jobs at the
 > same time. This prevents multiple jobs from racing on the shared cache before the lock is acquired.
+>
+>
+> These are the trade-offs of this version of set-build-counter:
+> - it is best-effort
+> - it is not safe for authoritative counts across parallel jobs
+> - it should only be used behind a strict concurrency group and only when you accept cache-based eventual consistency
+>
+> It does however, work without a PAT
 
 ## Usage
 
@@ -22,8 +30,11 @@ By default, this action starts counting at 0.
 env:
   REPO_MAJOR_MIN: 1.0
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: build-counter
+  cancel-in-progress: false
 
 steps:
   - name: Check out repo
@@ -43,6 +54,10 @@ steps:
 environment:
   REPO_MAJOR_MIN: 1.0
 
+concurrency:
+  group: build-counter
+  cancel-in-progress: false
+
 steps:
 - uses: mshafer1/gh-actions/set-build-counter@v0
   id: set-build-counter
@@ -59,6 +74,10 @@ If you have previous builds and want the build counter to start at a value other
 ```yaml
 environment:
   REPO_MAJOR_MIN: 1.0
+
+concurrency:
+  group: build-counter
+  cancel-in-progress: false
 
 steps:
 - uses: mshafer1/gh-actions/set-build-counter@v0
