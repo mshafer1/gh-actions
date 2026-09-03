@@ -1,5 +1,5 @@
 name: Update Build Counter
-description: Update a JSON build counter with an exclusive lock around the cache mutation.
+description: Update a JSON build counter that is stored in Actions Cache. Note that the parent job must limit concurrency to avoid race conditions.
 
 inputs:
   seed:
@@ -31,10 +31,16 @@ runs:
         go-version: '1.22'
 
     - name: Restore JSON Counter Cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache@v4
       with:
         path: counters.json
-        key: shared-build-counter-json
+        key: shared-build-counter-json-${{ github.run_id }}-${{ github.ref_name }}
+        description: |-
+            Cache the JSON build count for ${{ inputs.seed }} for future incrementing.
+        save-always: true
+        enableCrossOsArchive: true
+        restore-keys: |
+          shared-build-counter-json-${{ inputs.seed }}
 
     - name: Update Counter via Go Script
       id: counter
@@ -56,6 +62,14 @@ runs:
             "os"
             "strconv"
         )
+
+        func copyFile(src, dst string) error {
+            data, err := os.ReadFile(src)
+            if err != nil {
+                return err
+            }
+            return os.WriteFile(dst, data, 0644)
+        }
 
         func main() {
             counterBase := os.Getenv("INPUT_COUNTER_BASE")
@@ -109,7 +123,10 @@ runs:
             }
 
             if err := os.Rename(tempPath, dbFile); err != nil {
-                log.Fatalf("failed to atomically replace db file: %v", err)
+                log.Printf("atomic rename failed, falling back to copy: %v", err)
+                if copyErr := copyFile(tempPath, dbFile); copyErr != nil {
+                    log.Fatalf("failed to replace db file via rename or copy: rename=%v copy=%v", err, copyErr)
+                }
             }
 
             if githubOutput := os.Getenv("GITHUB_OUTPUT"); githubOutput != "" {
@@ -125,14 +142,7 @@ runs:
         }
         EOF
 
-        go mod init counter-app
         go run counter.go
       env:
         INPUT_COUNTER_BASE: ${{ inputs.seed }}
         INPUT_START_COUNTER_AT: ${{ inputs.start-counter-at }}
-
-    - name: Save JSON Counter Cache
-      uses: actions/cache/save@v4
-      with:
-        path: counters.json
-        key: shared-build-counter-json
