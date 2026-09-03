@@ -1,7 +1,7 @@
-# set-build-counter
+# set-build-counter-2
 
 
-The `mshafer1/gh-actions/set-build-counter` action sets an ever variable stored in a pipeline cache based 
+The `mshafer1/gh-actions/set-build-counter-2` action sets an ever variable stored in a pipeline cache based 
 on seed information.
 
 By default, this action starts counting at 0.
@@ -34,7 +34,7 @@ steps:
   - name: Check out repo
     uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
   - uses: mshafer1/gh-actions/set-build-counter@v0
-    id: set-build-counter
+    id: set-build-counter-2
   - name: Use Output
     run: |
       echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
@@ -54,7 +54,7 @@ concurrency:
 
 steps:
 - uses: mshafer1/gh-actions/set-build-counter@v0
-  id: set-build-counter
+  id: set-build-counter-2
   with:
     seed: "${{ env.REPO_MAJOR_MIN }}"
 - name: Use Output
@@ -75,7 +75,7 @@ concurrency:
 
 steps:
 - uses: mshafer1/gh-actions/set-build-counter@v0
-  id: set-build-counter
+  id: set-build-counter-2
   with:
     start-counter-at: 100
 - name: Use Output
@@ -97,7 +97,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: mshafer1/gh-actions/set-build-counter@v0
-        id: set-build-counter
+        id: set-build-counter-2
         with:
           seed: ${{ github.ref_name }}
 
