@@ -35,7 +35,9 @@ runs:
       uses: actions/cache/restore@v4
       with:
         path: counters.json
-        key: shared-build-counter-json-${{ inputs.seed }}
+        key: shared-build-counter-json-${{ inputs.seed }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: |
+          shared-build-counter-json-${{ inputs.seed }}-
         enableCrossOsArchive: true
 
     - name: Update Counter via Go Script
@@ -148,5 +150,5 @@ runs:
       uses: actions/cache/save@v4
       with:
         path: counters.json
-        key: shared-build-counter-json-${{ inputs.seed }}
+        key: shared-build-counter-json-${{ inputs.seed }}-${{ github.run_id }}-${{ github.run_attempt }}
         enableCrossOsArchive: true
