@@ -31,8 +31,7 @@ runs:
         go-version: '1.22'
 
     - name: Restore JSON Counter Cache
-      id: cache-restore
-      uses: actions/cache/restore@v4
+      uses: actions/cache@v4
       with:
         path: counters.json
         key: shared-build-counter-json-${{ inputs.seed }}
@@ -142,11 +141,3 @@ runs:
       env:
         INPUT_COUNTER_BASE: ${{ inputs.seed }}
         INPUT_START_COUNTER_AT: ${{ inputs.start-counter-at }}
-
-    - name: Save JSON Counter Cache
-      if: always()
-      uses: actions/cache/save@v4
-      with:
-        path: counters.json
-        key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-        enableCrossOsArchive: true
