@@ -35,9 +35,6 @@ runs:
       with:
         path: counters.json
         key: shared-build-counter-json-${{ github.run_id }}-${{ github.ref_name }}
-        description: |-
-            Cache the JSON build count for ${{ inputs.seed }} for future incrementing.
-        save-always: true
         enableCrossOsArchive: true
         restore-keys: |
           shared-build-counter-json-${{ inputs.seed }}
