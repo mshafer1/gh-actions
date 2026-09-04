@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
       - uses: mshafer1/gh-actions/set-build-counter-2@v0
         id: set-build-counter
       - name: Use Output
