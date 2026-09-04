@@ -7,6 +7,10 @@ By default, this action starts counting at 0.
 > [!IMPORTANT]
 > This action finds the previous run via the GitHub Actions API and then uses `actions/download-artifact` to restore the artifact contents. Use a workflow `permissions` block that allows `actions: read` for the token used by the runner, and consider a `concurrency` group if multiple jobs may trigger the action at the same time.
 
+
+> [!IMPORTANT]
+> On GitHub, the normal pipeline artifact retention is 90 days. If you need counter values that last across runs that are less frequent then that, consider `mshafer1/gh-actions/set-build-counter`
+
 ## Usage
 
 > [!NOTE]
