@@ -55,7 +55,9 @@ runs:
         run_id=""
         while IFS= read -r candidate; do
           [ -n "$candidate" ] || continue
-          [ "$candidate" = "${GITHUB_RUN_ID}" ] && continue
+          # Intentionally allow the current run ID so later jobs in the same run
+          # can reuse an artifact uploaded earlier in the run
+          # (i.e., this action can be called multiple times)
 
           artifact_exists=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts" --jq '.artifacts[] | select(.name == "build-counters") | .name' | head -n 1 || true)
           if [ -n "$artifact_exists" ]; then
