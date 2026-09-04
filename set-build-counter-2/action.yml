@@ -35,13 +35,14 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        WORKFLOW_NAME: ${{ github.workflow }}
       run: |
         set -euo pipefail
 
         workflow_id=""
-        if ! workflow_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows" --jq '.workflows[] | select(.name == "${{ github.workflow }}") | .id' | head -n 1); then
+        if ! workflow_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows" | jq -r --arg workflow_name "$WORKFLOW_NAME" '.workflows[] | select(.name == $workflow_name) | .id' | head -n 1); then
           echo "run_id=" >> "$GITHUB_OUTPUT"
-          echo "No workflow named '${{ github.workflow }}' was found; defaulting to start-counter-at."
+          echo "No workflow named '${WORKFLOW_NAME}' was found; defaulting to start-counter-at."
           exit 0
         fi
 
