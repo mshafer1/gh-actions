@@ -20,8 +20,14 @@ env:
 permissions: {}
 
 jobs:
+  check-actions:
+    name: Check actions
+    uses: ./.github/workflows/check-actions.yml
+    permissions:
+      security-events: write # required for the action to report results to the security tab
   build-counter-test-default:
     name: Default build counter test
+    needs: check-actions
     runs-on: ubuntu-latest
     environment: build-counter
     steps:
@@ -41,6 +47,7 @@ jobs:
           BUILD_COUNT: ${{ steps.set-build-counter.outputs.count }}
   build-counter-test-with-seed:
     name: Build counter test with seed
+    needs: check-actions
     runs-on: ubuntu-latest
     environment: build-counter
     permissions: {}
@@ -62,6 +69,7 @@ jobs:
           BUILD_COUNT: ${{ steps.set-build-counter.outputs.count }}
   build-counter-test-with-start-value:
     name: Build counter test with start value
+    needs: check-actions
     runs-on: ubuntu-latest
     environment: build-counter
     permissions: {}
@@ -84,6 +92,7 @@ jobs:
           BUILD_COUNT: ${{ steps.set-build-counter.outputs.count }}
   build-counter-2-with-start-value:
     name: Build counter test 2 with start value
+    needs: check-actions
     runs-on: ubuntu-latest
     permissions: {}
     steps:
@@ -103,6 +112,7 @@ jobs:
           BUILD_COUNT: ${{ steps.set-build-counter.outputs.count }}
   build-counter-2-with-seed:
     name: Build counter test 2 with seed
+    needs: check-actions
     runs-on: ubuntu-latest
     permissions: {}
     steps:
