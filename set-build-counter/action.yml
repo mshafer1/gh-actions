@@ -23,16 +23,23 @@ runs:
   - name: Set variables
     id: "set-build-counter-vars"
     shell: bash
+    env:
+      INPUT_SEED: ${{ inputs.seed }}
+      INPUT_START_COUNTER_AT: ${{ inputs.start-counter-at }}
     run: |
-      if [ -z "${{ inputs.seed }}" ]; then
+      if [ -z "${INPUT_SEED:-}" ]; then
         SEED="default"
       else
-        SEED=$( echo "${{ inputs.seed }}" | tr '[:upper:]' '[:lower:]' | tr ' @./-' '_____' )
+        SEED=$(printf '%s' "${INPUT_SEED}" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '_')
       fi
 
       VAR_NAME="build_counter_${SEED}"
 
-      VAR_START=$(( ${{ inputs.start-counter-at }} - 1 ))
+      START_COUNTER_AT="${INPUT_START_COUNTER_AT:-0}"
+      if [[ ! "${START_COUNTER_AT}" =~ ^-?[0-9]+$ ]]; then
+        START_COUNTER_AT="0"
+      fi
+      VAR_START=$(( START_COUNTER_AT - 1 ))
 
       echo "Starting value at ${VAR_START} for variable ${VAR_NAME}"
 
@@ -44,6 +51,6 @@ runs:
 
       echo "New counter value is ${NEW_VAL}"
 
-      echo "counter=${NEW_VAL}" >> $GITHUB_OUTPUT
+      echo "counter=${NEW_VAL}" >> "$GITHUB_OUTPUT"
 
       gh variable set "$VAR_NAME" -b "$NEW_VAL"
