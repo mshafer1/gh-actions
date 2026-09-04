@@ -146,7 +146,7 @@ runs:
         INPUT_START_COUNTER_AT: ${{ inputs.start-counter-at }}
 
     - name: Save JSON Counter Cache
-      if: always()
+      if: '!canceled()'
       uses: actions/cache/save@v4
       with:
         path: counters.json
