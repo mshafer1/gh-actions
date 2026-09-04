@@ -126,6 +126,7 @@ runs:
                     log.Fatalf("failed to replace db file via rename or copy: rename=%v copy=%v", err, copyErr)
                 }
             }
+            log.Printf("Updated counter for '%s' to %d and stored in %s", counterBase, currentCount, dbFile)
 
             if githubOutput := os.Getenv("GITHUB_OUTPUT"); githubOutput != "" {
                 if f, err := os.OpenFile(githubOutput, os.O_APPEND|os.O_WRONLY, 0644); err == nil {
