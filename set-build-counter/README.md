@@ -7,7 +7,7 @@ on seed information.
 By default, this action starts counting at 0.
 
 > [!IMPORTANT]
-> This action requires a GitHub token with repo variable write access, such as a PAT that has permission to update repository variables. The default GITHUB_TOKEN does not have the needed permission.
+> This action requires a GitHub token with repo variable write access, such as a PAT that has permission to update repository variables. The default GITHUB_TOKEN does not have the needed permission without granting the action `actions: write` permission.
 > Please use a fine-grained PAT to minimize access.
 
 ## Usage

@@ -1,8 +1,8 @@
 # set-build-counter-2
 
 
-The `mshafer1/gh-actions/set-build-counter-2` action sets an ever variable stored in a pipeline cache based 
-on seed information.
+The `mshafer1/gh-actions/set-build-counter-2` action sets an ever increasing variable
+stored in a pipeline cache based on seed information.
 
 By default, this action starts counting at 0.
 
@@ -33,8 +33,8 @@ concurrency:
 steps:
   - name: Check out repo
     uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-  - uses: mshafer1/gh-actions/set-build-counter@v0
-    id: set-build-counter-2
+  - uses: mshafer1/gh-actions/set-build-counter-2@v0
+    id: set-build-counter
   - name: Use Output
     run: |
       echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
@@ -48,13 +48,15 @@ steps:
 env:
   REPO_MAJOR_MIN: 1.0
 
+permissions: {}
+
 concurrency:
   group: build-counter
   cancel-in-progress: false
 
 steps:
-- uses: mshafer1/gh-actions/set-build-counter@v0
-  id: set-build-counter-2
+- uses: mshafer1/gh-actions/set-build-counter-2@v0
+  id: set-build-counter
   with:
     seed: "${{ env.REPO_MAJOR_MIN }}"
 - name: Use Output
@@ -73,9 +75,11 @@ concurrency:
   group: build-counter
   cancel-in-progress: false
 
+permission: {}
+
 steps:
-- uses: mshafer1/gh-actions/set-build-counter@v0
-  id: set-build-counter-2
+- uses: mshafer1/gh-actions/set-build-counter-2@v0
+  id: set-build-counter
   with:
     start-counter-at: 100
 - name: Use Output
@@ -91,21 +95,27 @@ concurrency:
   group: build-counter
   cancel-in-progress: false
 
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      content: read # NOTE: this is only needed for private and internal repos
     steps:
       - uses: actions/checkout@v4
-      - uses: mshafer1/gh-actions/set-build-counter@v0
-        id: set-build-counter-2
         with:
-          seed: ${{ github.ref_name }}
-
+          persist-credentials: false
+      - uses: mshafer1/gh-actions/set-build-counter-2@v0
+        id: set-build-counter
+        with:
+          seed: ${{ github.ref_name }} # branch that triggered action main or <pr_number>/merge
       - name: Use counter
         run: echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
 ```
 
-This complements the action's internal lock and is the recommended way to keep the cache update path serialized.
+The action cannot provide a cross-runner lock; workflow/job `concurrency` is required to serialize cache updates.
+
 
 ## Outputs
 
