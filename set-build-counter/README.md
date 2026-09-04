@@ -4,7 +4,11 @@
 The `mshafer1/gh-actions/build-counter` action sets an ever incrementing repo variable based 
 on seed information.
 
-By default, this action starts counting at 0
+By default, this action starts counting at 0.
+
+> [!IMPORTANT]
+> This action requires a GitHub token with repo variable write access, such as a PAT that has permission to update repository variables. The default GITHUB_TOKEN does not have the needed permission without granting the action `actions: write` permission.
+> Please use a fine-grained PAT to minimize access.
 
 ## Usage
 
@@ -26,7 +30,7 @@ steps:
   - uses: mshafer1/gh-actions/set-build-counter@v0
     id: set-build-counter
     env:
-      GH_TOKEN: ${{ secrets.GH_PAT }} # default GITHUB_TOKEN has no permission to set repo variables, must be a PAT that has variable write access
+      GH_TOKEN: ${{ secrets.GH_PAT }} # default GITHUB_TOKEN has no permission to set repo variables, must be a PAT that has write access to actions variables
   - name: Use Output
     run: |
       echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
@@ -37,7 +41,7 @@ steps:
 ### `seed`
 
 ```yaml
-environment:
+env:
   REPO_MAJOR_MIN: 1.0
 
 steps:
@@ -56,7 +60,7 @@ steps:
 If you have previous builds and want the build counter to start at a value other then 0 (or for any other reason), specify it here.
 
 ```yaml
-environment:
+env:
   REPO_MAJOR_MIN: 1.0
 
 steps:
