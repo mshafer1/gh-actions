@@ -1,121 +1,90 @@
 # set-build-counter-2
 
-
-The `mshafer1/gh-actions/set-build-counter-2` action sets an ever increasing variable
-stored in a pipeline cache based on seed information.
+The `mshafer1/gh-actions/set-build-counter-2` action looks for a previous `build-counters` artifact from the same workflow, starts from `start-counter-at` if none exists, increments the requested counter value, and uploads the resulting `counters.json` as a `build-counters` artifact for the next run.
 
 By default, this action starts counting at 0.
 
 > [!IMPORTANT]
-> This action uses a shared pipeline cache as a convenience mechanism only.
-> It is not an authoritative or integrity-protected source of truth and is not suitable for security-sensitive or repo-wide build accounting across parallel jobs.
->
-> Use it only behind a strict workflow-level `concurrency` group and only when you accept cache-based eventual consistency.
-> This variant is best-effort: it can work without a PAT, but it does not provide the same guarantees as a repo-scoped state store with explicit permissions.
+> This action finds the previous run via the GitHub Actions API and then uses `actions/download-artifact` to restore the artifact contents. Use a workflow `permissions` block that allows `actions: read` for the token used by the runner, and consider a `concurrency` group if multiple jobs may trigger the action at the same time.
 
 ## Usage
 
 > [!NOTE]
-> These examples use `@v0`, but pinning to a commit hash or full release tag is recommended for 
-> build reproducibility and security.
+> These examples use `@v0`, but pinning to a commit hash or full release tag is recommended for build reproducibility and security.
 
 ```yaml
+name: build
 
-env:
-  REPO_MAJOR_MIN: 1.0
+on:
+  workflow_dispatch:
 
-permissions: {}
+permissions:
+  actions: read
 
 concurrency:
   group: build-counter
   cancel-in-progress: false
 
-steps:
-  - name: Check out repo
-    uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-  - uses: mshafer1/gh-actions/set-build-counter-2@v0
-    id: set-build-counter
-  - name: Use Output
-    run: |
-      echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - uses: mshafer1/gh-actions/set-build-counter-2@v0
+        id: set-build-counter
+      - name: Use Output
+        run: |
+          echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
 ```
 
 ## Inputs
 
 ### `seed`
 
+This identifies the counter bucket to update. For example, a branch or release label such as `release-1.0`.
+
 ```yaml
-env:
-  REPO_MAJOR_MIN: 1.0
-
-permissions: {}
-
-concurrency:
-  group: build-counter
-  cancel-in-progress: false
-
 steps:
-- uses: mshafer1/gh-actions/set-build-counter-2@v0
-  id: set-build-counter
-  with:
-    seed: "${{ env.REPO_MAJOR_MIN }}"
-- name: Use Output
-  run: echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
+  - uses: mshafer1/gh-actions/set-build-counter-2@v0
+    id: set-build-counter
+    with:
+      seed: "${{ github.ref_name }}"
 ```
 
 ### `start-counter-at`
 
-If you have previous builds and want the build counter to start at a value other then 0 (or for any other reason), specify it here.
+If no prior `build-counters` artifact is found for the same workflow, the action starts from this value instead.
 
 ```yaml
-env:
-  REPO_MAJOR_MIN: 1.0
-
-concurrency:
-  group: build-counter
-  cancel-in-progress: false
-
-permission: {}
-
 steps:
-- uses: mshafer1/gh-actions/set-build-counter-2@v0
-  id: set-build-counter
-  with:
-    start-counter-at: 100
-- name: Use Output
-  run: echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
+  - uses: mshafer1/gh-actions/set-build-counter-2@v0
+    id: set-build-counter
+    with:
+      start-counter-at: 100
+      seed: "release-1.0"
 ```
+
+## Artifact behavior
+
+The action does the following each run:
+
+1. Looks for the latest artifact named `build-counters` produced by an earlier run in the same workflow.
+2. If it is found, it restores `counters.json` and uses it as the basis for the next increment.
+3. If it is not found, it starts from `start-counter-at` (default `0`).
+4. Writes the updated counters to `counters.json` and uploads it again as an artifact named `build-counters`.
+
+This avoids the branch restriction of GitHub Actions cache keys while still allowing the counter to carry forward across workflow runs.
 
 ## Concurrency
 
-Use a workflow or job `concurrency` group for the pipeline that calls this action when multiple jobs may update the same cache key at the same time:
+When multiple jobs in a workflow can call this action simultaneously, keep them behind a workflow or job `concurrency` group so that they do not race against each other while downloading and uploading the shared artifact.
 
 ```yaml
 concurrency:
   group: build-counter
   cancel-in-progress: false
-
-permissions: {}
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      content: read # NOTE: this is only needed for private and internal repos
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: mshafer1/gh-actions/set-build-counter-2@v0
-        id: set-build-counter
-        with:
-          seed: ${{ github.ref_name }} # branch that triggered action main or <pr_number>/merge
-      - name: Use counter
-        run: echo "Build Counter Result: ${{ steps.set-build-counter.outputs.count }}"
 ```
-
-The action cannot provide a cross-runner lock; workflow/job `concurrency` is required to serialize cache updates.
-
 
 ## Outputs
 

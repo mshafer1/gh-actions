@@ -30,15 +30,60 @@ runs:
       with:
         go-version: '1.22'
 
-    - name: Restore JSON Counter Cache
-      id: cache-restore
-      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+    - name: Find previous build-counters artifact run
+      id: find-artifact
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+
+        workflow_id=""
+        if ! workflow_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows" --jq '.workflows[] | select(.name == "${{ github.workflow }}") | .id' | head -n 1); then
+          echo "run_id=" >> "$GITHUB_OUTPUT"
+          echo "No workflow named '${{ github.workflow }}' was found; defaulting to start-counter-at."
+          exit 0
+        fi
+
+        run_id=""
+        while IFS= read -r candidate; do
+          [ -n "$candidate" ] || continue
+          [ "$candidate" = "${GITHUB_RUN_ID}" ] && continue
+
+          artifact_exists=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts" --jq '.artifacts[] | select(.name == "build-counters") | .name' | head -n 1 || true)
+          if [ -n "$artifact_exists" ]; then
+            run_id="$candidate"
+            break
+          fi
+        done < <(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/runs?per_page=20" --jq '.workflow_runs[].id' || true)
+
+        if [ -n "$run_id" ]; then
+          echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          echo "Found build-counters artifact in workflow run ${run_id}."
+        else
+          echo "run_id=" >> "$GITHUB_OUTPUT"
+          echo "No previous build-counters artifact found for this workflow; defaulting to start-counter-at."
+        fi
+
+    - name: Download previous build-counters artifact
+      if: steps.find-artifact.outputs.run_id != ''
+      continue-on-error: true
+      uses: actions/download-artifact@v4
       with:
-        path: counters.json
-        key: shared-build-counter-json-${{ inputs.seed }}-${{ github.run_id }}-${{ github.run_attempt }}
-        restore-keys: |
-          shared-build-counter-json-${{ inputs.seed }}-
-        enableCrossOsArchive: true
+        name: build-counters
+        path: previous-build-counters
+        github-token: ${{ github.token }}
+        run-id: ${{ steps.find-artifact.outputs.run_id }}
+
+    - name: Restore build-counters data
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        rm -f counters.json
+        if [ -f previous-build-counters/counters.json ]; then
+          cp previous-build-counters/counters.json counters.json
+        fi
 
     - name: Update Counter via Go Script
       id: counter
@@ -146,10 +191,11 @@ runs:
         INPUT_COUNTER_BASE: ${{ inputs.seed }}
         INPUT_START_COUNTER_AT: ${{ inputs.start-counter-at }}
 
-    - name: Save JSON Counter Cache
+    - name: Upload build counters artifact
       if: '!cancelled()'
-      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      uses: actions/upload-artifact@v4
       with:
+        name: build-counters
         path: counters.json
-        key: shared-build-counter-json-${{ inputs.seed }}-${{ github.run_id }}-${{ github.run_attempt }}
-        enableCrossOsArchive: true
+        if-no-files-found: error
+        retention-days: 90
