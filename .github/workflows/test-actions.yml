@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - set-build-counter/**
+      - set-build-counter-2/**
       - .github/workflows/test-actions.yml
   workflow_dispatch:
 

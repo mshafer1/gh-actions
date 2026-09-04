@@ -8,7 +8,7 @@ By default, this action starts counting at 0.
 
 > [!IMPORTANT]
 > This action requires a GitHub token with repo variable write access, such as a PAT that has permission to update repository variables. The default GITHUB_TOKEN does not have the needed permission.
-> Please use a fine-grained pat to minimize access.
+> Please use a fine-grained PAT to minimize access.
 
 ## Usage
 
@@ -41,7 +41,7 @@ steps:
 ### `seed`
 
 ```yaml
-environment:
+env:
   REPO_MAJOR_MIN: 1.0
 
 steps:
@@ -60,7 +60,7 @@ steps:
 If you have previous builds and want the build counter to start at a value other then 0 (or for any other reason), specify it here.
 
 ```yaml
-environment:
+env:
   REPO_MAJOR_MIN: 1.0
 
 steps:

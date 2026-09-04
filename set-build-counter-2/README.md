@@ -45,7 +45,7 @@ steps:
 ### `seed`
 
 ```yaml
-environment:
+env:
   REPO_MAJOR_MIN: 1.0
 
 concurrency:
@@ -66,7 +66,7 @@ steps:
 If you have previous builds and want the build counter to start at a value other then 0 (or for any other reason), specify it here.
 
 ```yaml
-environment:
+env:
   REPO_MAJOR_MIN: 1.0
 
 concurrency:
