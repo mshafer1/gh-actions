@@ -20,6 +20,7 @@ on:
 
 permissions:
   actions: read
+  contents: read # Note, not needed on public repos
 
 concurrency:
   group: build-counter
